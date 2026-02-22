@@ -1,4 +1,5 @@
 ﻿using Application.Authentication;
+using Application.Services.Admin;
 using Application.Services.Auth;
 using Domain;
 using Domain.Entities.Identity;
@@ -28,6 +29,7 @@ public static class ApplicationDependencies
 
         Services.AddScoped<IJwtProvider, JwtProvider>();
         Services.AddScoped<IAuthService, AuthService>();
+        Services.AddScoped<IAdminService, AdminService>();
 
 
 
