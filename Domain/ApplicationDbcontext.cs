@@ -24,5 +24,7 @@ public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options
 
         foreach (var fk in cascadeFKs)
             fk.DeleteBehavior = DeleteBehavior.Restrict;
+
+        base.OnModelCreating(modelBuilder);
     }
 }

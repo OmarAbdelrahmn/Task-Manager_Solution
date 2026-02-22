@@ -19,7 +19,7 @@ public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
     {
         Claim[] claims = [
             new(JwtRegisteredClaimNames.Sub, user.Id),
-            new(JwtRegisteredClaimNames.Email, user.Email!),
+            new(JwtRegisteredClaimNames.Name, user.UserName!),
             new(JwtRegisteredClaimNames.GivenName, user.FullName ?? ""),
             new(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
             new(nameof(roles), JsonSerializer.Serialize(roles), JsonClaimValueTypes.JsonArray),
