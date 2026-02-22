@@ -1,6 +1,7 @@
 ﻿using Application.Authentication;
 using Application.Services.Admin;
 using Application.Services.Auth;
+using Application.Services.User;
 using Domain;
 using Domain.Entities.Identity;
 using FluentValidation;
@@ -30,6 +31,7 @@ public static class ApplicationDependencies
         Services.AddScoped<IJwtProvider, JwtProvider>();
         Services.AddScoped<IAuthService, AuthService>();
         Services.AddScoped<IAdminService, AdminService>();
+        Services.AddScoped<IUserService, UserServices>();
 
 
 

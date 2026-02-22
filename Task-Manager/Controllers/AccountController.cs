@@ -1,0 +1,50 @@
+﻿using Application.Contracts.User;
+using Application.Extensions;
+using Application.Services.User;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Task_Manager;
+
+
+namespace Express_Service.Controllers;
+[Route("api/me")]
+[ApiController]
+[Authorize]
+public class AccountController(IUserService service) : ControllerBase
+{
+    private readonly IUserService service = service;
+    public class Resu(string massage)
+    {
+        public string Massage { get; set; } = massage;
+    }
+
+    [HttpGet("")]
+ 
+    public async Task<IActionResult> ShowUserProfile()
+    {
+        var result = await service.GetUserProfile(User.GetUserId()!);
+
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+    
+
+    [HttpPut("info")]
+ 
+
+    public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateUserProfileRequest request)
+    {
+        var result = await service.UpdateUserProfile(User.GetUserId()!, request);
+
+        return result.IsSuccess ? Ok(new Resu("profile Updated successfully")) : result.ToProblem();
+    }
+
+    [HttpPut("change-password")]
+ 
+
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var result = await service.ChangePassword(User.GetUserId()!, request);
+
+        return result.IsSuccess ? Ok(new Resu("Password Changed Successfully")) : result.ToProblem();
+    }
+}

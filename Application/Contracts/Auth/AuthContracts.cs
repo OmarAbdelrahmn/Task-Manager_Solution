@@ -37,3 +37,13 @@ public record ResetPasswordRequest(
     string Code,
     string NewPassword
 );
+
+public record RefreshTokenRequest(
+    string Token,
+    string RefreshToken
+);
+
+public record LoginRequsst(
+    string UserName,
+    string Password
+);

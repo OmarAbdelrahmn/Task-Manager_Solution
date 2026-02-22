@@ -36,9 +36,9 @@ public class AuthService(
 
     private readonly int _refreshTokenExpiryDays = 14;
 
-    public async Task<Result<AuthResponse>> GetTokenAsync(string email, string password, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponse>> GetTokenAsync(string UserName, string password, CancellationToken cancellationToken = default)
     {
-        if (await _userManager.FindByEmailAsync(email) is not { } user)
+        if (await _userManager.FindByNameAsync(UserName) is not { } user)
             return Result.Failure<AuthResponse>(UserErrors.InvalidCredentials);
 
         if (user.IsDisabled)
