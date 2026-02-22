@@ -1,0 +1,28 @@
+﻿using Domain.Entities.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
+
+namespace Domain;
+
+public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
+{
+    public required DbSet<ApplicationUser> ApplicationUsers { get; set; }
+    public required DbSet<ApplicationRole> ApplicationRoles { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        var cascadeFKs = modelBuilder.Model.GetEntityTypes()
+            .SelectMany(t => t.GetForeignKeys())
+            .Where(fk => !fk.IsOwnership && fk.DeleteBehavior == DeleteBehavior.Cascade);
+
+        foreach (var fk in cascadeFKs)
+            fk.DeleteBehavior = DeleteBehavior.Restrict;
+    }
+}
