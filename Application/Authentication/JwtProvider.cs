@@ -33,11 +33,11 @@ public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
             issuer: _options.Issuer,
             audience: _options.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_options.ExpiryMinutes),
+            expires: DateTime.Now.AddMinutes(_options.ExpiryIn),
             signingCredentials: singingCredentials
         );
 
-        return (token: new JwtSecurityTokenHandler().WriteToken(token), expiresIn: _options.ExpiryMinutes * 60);
+        return (token: new JwtSecurityTokenHandler().WriteToken(token), expiresIn: _options.ExpiryIn * 60);
     }
 
     public string? ValidateToken(string token)

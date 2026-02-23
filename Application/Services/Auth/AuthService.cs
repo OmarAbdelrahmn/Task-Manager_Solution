@@ -60,6 +60,8 @@ public class AuthService(
                 ExpiresOn = refreshTokenExpiration
             });
 
+            user.LastLogin = DateTime.Now;
+
             await _userManager.UpdateAsync(user);
 
             var response = new AuthResponse(user.Id, user.UserName , user.FullName, token, expiresIn, refreshToken, refreshTokenExpiration);

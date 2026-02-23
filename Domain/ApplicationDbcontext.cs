@@ -1,6 +1,7 @@
 ﻿using Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -26,5 +27,11 @@ public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options
             fk.DeleteBehavior = DeleteBehavior.Restrict;
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(warnings =>
+            warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 }
