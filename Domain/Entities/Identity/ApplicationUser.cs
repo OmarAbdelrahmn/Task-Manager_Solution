@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Domain.Entities.Main;
+using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
 
 namespace Domain.Entities.Identity;
 
@@ -20,4 +21,8 @@ public class ApplicationUser : IdentityUser
     public bool IsDisabled { get; set; }
 
     public List<RefreshToken> RefreshTokens { get; set; } = [];
+    public ICollection<TaskAssignee> AssignedTasks { get; set; } = [];
+    public ICollection<ConversationParticipant> Conversations { get; set; } = [];
+    public ICollection<Message> Messages { get; set; } = [];
+    public ICollection<Notification> Notifications { get; set; } = [];
 }
