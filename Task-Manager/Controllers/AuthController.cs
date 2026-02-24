@@ -1,55 +1,64 @@
 ﻿using Application.Contracts.Auth;
+using Application.Extensions;
 using Application.Services.Auth;
+using Application.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Task_Manager;
 
 namespace Task_Manager.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/auth")]
 [ApiController]
-public class AuthController(IAuthService service) : ControllerBase
+public class AuthController(
+    IAuthService service,
+    IUserService userService) : ControllerBase
 {
-    private readonly IAuthService service = service;
-
-    [HttpPost("register")] 
+    // POST api/auth/register
+    [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var response = await service.RegisterAsync(request);
-
-        return response.IsSuccess ?
-            Ok(new Resu("Done please try to Login")) :
-            response.ToProblem();
+        var result = await service.RegisterAsync(request);
+        return result.IsSuccess
+            ? Ok(new { message = "Registered successfully, please sign in" })
+            : result.ToProblem();
     }
-    
-    [HttpPost("signin")] 
-    public async Task<IActionResult> Signin([FromBody] LoginRequsst request)
+
+    // POST api/auth/signin
+    [HttpPost("signin")]
+    public async Task<IActionResult> SignIn([FromBody] LoginRequsst request)
     {
-        var response = await service.GetTokenAsync(request.UserName , request.Password);
-
-        return response.IsSuccess ?
-            Ok(response.Value) :
-            response.ToProblem();
+        var result = await service.GetTokenAsync(request.UserName, request.Password);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
 
+    // POST api/auth/refresh
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
     {
-        var authResult = await service.GetRefreshTokenAsync(request.Token, request.RefreshToken, cancellationToken);
-
-        return authResult.IsSuccess ? Ok(authResult.Value) : authResult.ToProblem();
+        var result = await service.GetRefreshTokenAsync(
+            request.Token, request.RefreshToken, cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
 
-    [HttpPost("revoke-refresh-token")]
-    public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
+    // POST api/auth/logout
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout(
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await service.RevokeRefreshTokenAsync(request.Token, request.RefreshToken, cancellationToken);
+        // revoke token
+        var result = await service.RevokeRefreshTokenAsync(
+            request.Token, request.RefreshToken, cancellationToken);
 
-        return result.IsSuccess ? Ok() : result.ToProblem();
-    }
+        if (!result.IsSuccess)
+            return result.ToProblem();
 
-    public class Resu(string massage)
-    {
-        public string Massage { get; set; } = massage;
+        // ✅ mark user offline
+        await userService.SetOnlineStatusAsync(User.GetUserId()!, false);
+
+        return Ok(new { message = "Logged out successfully" });
     }
 }

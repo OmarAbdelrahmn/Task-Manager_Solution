@@ -10,4 +10,6 @@ public interface IUserFileService
     Task<string> SaveFileAsync(IFormFile file, string folder, string userId);
     void DeleteFile(string fileUrl);
     bool IsValidFile(IFormFile file, string[] allowedTypes, long maxSizeBytes);
+    bool IsValidAvatar(IFormFile file);
+    bool IsValidAttachment(IFormFile file);
 }

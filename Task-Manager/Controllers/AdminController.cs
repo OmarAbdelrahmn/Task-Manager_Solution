@@ -1,92 +1,72 @@
-﻿
-using Application.Services.Admin;
+﻿using Application.Services.Admin;
 using Application.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR.Protocol;
-
-
 
 namespace Task_Manager.Controllers;
-[Route("api/[controller]")]
+
+[Route("api/admin")]
 [ApiController]
-public class AdminController(IAdminService service,IUserService service1) : ControllerBase
+[Authorize(Roles = "Admin")]       
+public class AdminController(
+    IAdminService service,
+    IUserService userService) : ControllerBase
 {
-    private readonly IAdminService service = service;
-    private readonly IUserService service1 = service1;
-
-
+    // GET api/admin/users
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers()
+    public async Task<IActionResult> GetAllUsers()
     {
         var users = await service.GetAllUsers();
-
-        return users is not null ?
-            Ok(users) :
-            BadRequest();
+        return Ok(users);
     }
 
-    [HttpPost("users/role")]
-    public async Task<IActionResult> ChangeRoles([FromBody] Rer request)
+    // GET api/admin/users/{id}
+    [HttpGet("users/{id}")]
+    public async Task<IActionResult> GetUserById(string id)
     {
-        var result = await service1.ChangeRoleForUser(request.UserName, request.NewRole);
-
-        return result.IsSuccess ? Ok(new Re("Role updated successfully")) : result.ToProblem();
+        var result = await service.GetUserAsync(id);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
 
-    [HttpGet("users/id/{Id}")] 
-    public async Task<IActionResult> GetUser(string Id)
+    // GET api/admin/users/by-name/{userName}
+    [HttpGet("users/by-name/{userName}")]
+    public async Task<IActionResult> GetUserByName(string userName)
     {
-        var user = await service.GetUserAsync(Id);
-
-        return user.IsSuccess ?
-            Ok(user.Value) :
-            user.ToProblem();
+        var result = await service.GetUser2Async(userName);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
-    
-    [HttpGet("users/name/{UserName}")]
-    public async Task<IActionResult> GetUser2(string UserName)
+
+    // PUT api/admin/users/{userName}/toggle-status
+    [HttpPut("users/{userName}/toggle-status")]
+    public async Task<IActionResult> ToggleStatus(string userName)
     {
-        var user = await service.GetUser2Async(UserName);
-
-        return user.IsSuccess ?
-            Ok(user.Value) :
-            user.ToProblem();
+        var result = await service.ToggleStatusAsync(userName);
+        return result.IsSuccess ? NoContent() : result.ToProblem();
     }
 
-    [HttpPut("users/{UserName}/toggle-status")]
-    public async Task<IActionResult> ToggleStatusAsync(string UserName)
+    // DELETE api/admin/users/{userName}
+    [HttpDelete("users/{userName}")]
+    public async Task<IActionResult> DeleteUser(string userName)
     {
-        var user = await service.ToggleStatusAsync(UserName);
-        return user.IsSuccess ?
-            NoContent() :
-            user.ToProblem();
+        var result = await service.DeletaUserAsync(userName);
+        return result.IsSuccess ? Ok(new { message = "User deleted successfully" }) : result.ToProblem();
     }
 
-
-    [HttpDelete("users/{UserName}")]
-    public async Task<IActionResult> DeleteAsync(string UserName)
+    // POST api/admin/users/{userName}/reset-password
+    [HttpPost("users/{userName}/reset-password")]
+    public async Task<IActionResult> ResetPassword(string userName)
     {
-        var user = await service.DeletaUserAsync(UserName);
-
-        return user.IsSuccess ?
-            Ok(new Re("done")) :
-            user.ToProblem();
+        var result = await service.ResetPasswordAsync(userName);
+        return result.IsSuccess ? Ok(new { message = "Password reset to P@ssword1234" }) : result.ToProblem();
     }
 
-
-    [HttpGet("adminreset")]
-    public async Task<IActionResult> AdminReset(string UserName)
+    // PUT api/admin/users/role
+    [HttpPut("users/role")]
+    public async Task<IActionResult> ChangeRole([FromBody] ChangeRoleRequest request)
     {
-        var result = await service.ResetPasswordAsync(UserName);
-        return result.IsSuccess ?
-            Ok() :
-            result.ToProblem();
+        var result = await userService.ChangeRoleForUser(request.UserName, request.NewRole);
+        return result.IsSuccess ? Ok(new { message = "Role updated successfully" }) : result.ToProblem();
     }
-
 }
 
-
-public record Rer(string UserName,string NewRole);
-
-public record Re(string massege);
+public record ChangeRoleRequest(string UserName, string NewRole);

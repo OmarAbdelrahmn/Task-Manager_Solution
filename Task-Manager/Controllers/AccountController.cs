@@ -1,50 +1,52 @@
 ﻿using Application.Contracts.User;
 using Application.Extensions;
+using Application.Services.Roles;
 using Application.Services.User;
+using Application.Services.UserFile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task_Manager;
 
+namespace Task_Manager.Controllers;
 
-namespace Express_Service.Controllers;
 [Route("api/me")]
 [ApiController]
 [Authorize]
-public class AccountController(IUserService service) : ControllerBase
+public class AccountController(
+    IUserService service,
+    IUserFileService fileService) : ControllerBase
 {
-    private readonly IUserService service = service;
-    public class Resu(string massage)
-    {
-        public string Massage { get; set; } = massage;
-    }
-
     [HttpGet("")]
- 
-    public async Task<IActionResult> ShowUserProfile()
+    public async Task<IActionResult> GetProfile()
     {
         var result = await service.GetUserProfile(User.GetUserId()!);
-
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
-    
 
     [HttpPut("info")]
- 
-
-    public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateUserProfileRequest request)
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileRequest request)
     {
         var result = await service.UpdateUserProfile(User.GetUserId()!, request);
-
-        return result.IsSuccess ? Ok(new Resu("profile Updated successfully")) : result.ToProblem();
+        return result.IsSuccess ? Ok(new { message = "Profile updated successfully" }) : result.ToProblem();
     }
 
     [HttpPut("change-password")]
- 
-
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         var result = await service.ChangePassword(User.GetUserId()!, request);
+        return result.IsSuccess ? Ok(new { message = "Password changed successfully" }) : result.ToProblem();
+    }
 
-        return result.IsSuccess ? Ok(new Resu("Password Changed Successfully")) : result.ToProblem();
+    [HttpPut("avatar")]
+    public async Task<IActionResult> UpdateAvatar(IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "No file provided" });
+
+        if (!fileService.IsValidAvatar(file))
+            return BadRequest(new { message = "Invalid file. Only JPG, PNG, WEBP allowed. Max size 2MB" });
+
+        var result = await service.UpdateAvatarAsync(User.GetUserId()!, file, fileService);
+        return result.IsSuccess ? Ok(new { message = "Avatar updated successfully" }) : result.ToProblem();
     }
 }
