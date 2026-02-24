@@ -18,4 +18,20 @@ public class TaskOccurrence : BaseEntity
     // Nav
     public AppTask Task { get; set; } = default!;
     public ICollection<TaskFile> Files { get; set; } = [];
+
+    public void RecalculateStatus()
+    {
+        Status = Progress switch
+        {
+            0 => TaskStatus.Todo,
+            100 => TaskStatus.Done,
+            _ => TaskStatus.InProgress
+        };
+
+        // auto-stamp completion time
+        if (Status == TaskStatus.Done && CompletedAt is null)
+            CompletedAt = DateTime.UtcNow;
+        else if (Status != TaskStatus.Done)
+            CompletedAt = null;
+    }
 }

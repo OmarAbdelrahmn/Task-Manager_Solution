@@ -1,4 +1,5 @@
-﻿using Domain.Entities.Identity;
+﻿using Domain.Entities.Base;
+using Domain.Entities.Identity;
 using Domain.Entities.Interceptors;
 using Domain.Entities.Main;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -12,7 +13,7 @@ using System.Text;
 
 namespace Domain;
 
-public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
+public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options, AuditInterceptor auditInterceptor) : IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
 {
 
     // Identity
@@ -38,6 +39,24 @@ public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
+        // ✅ global soft-delete filter — auto-excludes IsDeleted = true everywhere
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                modelBuilder.Entity(entityType.ClrType)
+                    .HasQueryFilter(
+                        System.Linq.Expressions.Expression.Lambda(
+                            System.Linq.Expressions.Expression.Equal(
+                                System.Linq.Expressions.Expression.Property(
+                                    System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e"),
+                                    nameof(AuditableEntity.IsDeleted)),
+                                System.Linq.Expressions.Expression.Constant(false)),
+                            System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e")));
+            }
+        }
+
+
         var cascadeFKs = modelBuilder.Model.GetEntityTypes()
             .SelectMany(t => t.GetForeignKeys())
             .Where(fk => !fk.IsOwnership && fk.DeleteBehavior == DeleteBehavior.Cascade);
@@ -51,7 +70,7 @@ public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder
-            .AddInterceptors(new AuditInterceptor())
+            .AddInterceptors(auditInterceptor)
             .ConfigureWarnings(warnings =>
              warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }

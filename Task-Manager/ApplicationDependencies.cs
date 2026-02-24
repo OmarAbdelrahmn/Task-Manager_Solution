@@ -4,6 +4,7 @@ using Application.Services.Auth;
 using Application.Services.User;
 using Domain;
 using Domain.Entities.Identity;
+using Domain.Entities.Interceptors;
 using FluentValidation;
 using Mapster;
 using MapsterMapper;
@@ -28,6 +29,9 @@ public static class ApplicationDependencies
         Services.AddControllers();
         Services.AddEndpointsApiExplorer();
 
+        Services.AddHttpContextAccessor();
+
+        Services.AddScoped<AuditInterceptor>();
         Services.AddScoped<IJwtProvider, JwtProvider>();
         Services.AddScoped<IAuthService, AuthService>();
         Services.AddScoped<IAdminService, AdminService>();

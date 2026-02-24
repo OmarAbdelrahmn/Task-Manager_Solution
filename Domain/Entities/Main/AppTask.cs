@@ -29,7 +29,7 @@ public class AppTask : AuditableEntity
     public ICollection<TaskFile> Files { get; set; } = [];
     public ICollection<TaskOccurrence> Occurrences { get; set; } = [];
     public Conversation? Conversation { get; set; }
-}
+
 
 
 public void RecalculateStatus(AppTask task)
