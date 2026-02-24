@@ -15,6 +15,8 @@ public class ApplicationUser : IdentityUser
 
     public DateTime? LastLogin { get; set; }
 
+    public string? AvatarUrl { get; set; }
+    public bool IsOnline { get; set; }
     public bool IsDisabled { get; set; }
 
     public List<RefreshToken> RefreshTokens { get; set; } = [];

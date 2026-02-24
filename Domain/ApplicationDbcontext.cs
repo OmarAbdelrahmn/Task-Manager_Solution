@@ -1,4 +1,5 @@
 ﻿using Domain.Entities.Identity;
+using Domain.Entities.Interceptors;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -31,7 +32,9 @@ public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.ConfigureWarnings(warnings =>
-            warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
+        optionsBuilder
+            .AddInterceptors(new AuditInterceptor())
+            .ConfigureWarnings(warnings =>
+             warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 }
