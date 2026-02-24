@@ -10,7 +10,7 @@ public class ConversationParticipant
 {
     public int ConversationId { get; set; }
     public string UserId { get; set; } = string.Empty;
-    public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+    public DateTime JoinedAt { get; set; } = DateTime.Now;
     public DateTime? LastReadAt { get; set; }          // for unread badge
 
     // Nav

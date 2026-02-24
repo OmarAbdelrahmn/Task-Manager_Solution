@@ -11,6 +11,7 @@ public record AuthResponse(
     string Id,
     string UserName,
     string? FullName,
+    string? AvatarUrl,
     string Token,
     int ExpiresIn,
     string RefreshToken,

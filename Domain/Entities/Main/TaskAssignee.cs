@@ -11,7 +11,7 @@ public class TaskAssignee
     public string UserId { get; set; } = string.Empty;      // who is assigned
     public string AssignedById { get; set; } = string.Empty; // who did the assigning
                                                              // UserId == AssignedById = self-assigned
-    public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+    public DateTime AssignedAt { get; set; } = DateTime.Now;
 
     // Nav
     public AppTask Task { get; set; } = default!;

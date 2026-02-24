@@ -36,4 +36,9 @@ public record UserErrors
 
     public static readonly Error InvalidRoles =
         new("Role.InvalidRoles", "Invalid roles", StatusCodes.Status400BadRequest);
+
+    public static readonly Error HasActiveTasks =
+    new("User.HasActiveTasks",
+        "Cannot delete user with active tasks, reassign them first",
+        StatusCodes.Status409Conflict);
 }

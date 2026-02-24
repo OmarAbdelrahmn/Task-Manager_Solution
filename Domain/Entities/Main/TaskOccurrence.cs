@@ -30,7 +30,7 @@ public class TaskOccurrence : BaseEntity
 
         // auto-stamp completion time
         if (Status == TaskStatus.Done && CompletedAt is null)
-            CompletedAt = DateTime.UtcNow;
+            CompletedAt = DateTime.Now;
         else if (Status != TaskStatus.Done)
             CompletedAt = null;
     }

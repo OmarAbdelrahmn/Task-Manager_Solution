@@ -17,13 +17,16 @@ public record UserResponse
     bool IsDisable
     );
 
-public record UserResponses
-(
+public record UserResponses(
     string Id,
     string FullName,
     string Address,
     string UserName,
     bool IsDisable,
+    bool IsOnline,           // ✅ added
+    string? AvatarUrl,       // ✅ added
     IEnumerable<string> Roles,
-    DateTime? LastLogin
-    );
+    DateTime? LastLogin,
+    int AssignedTasksCount,  // ✅ added
+    int CompletedTasksCount  // ✅ added
+);

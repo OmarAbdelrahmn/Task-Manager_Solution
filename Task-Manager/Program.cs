@@ -16,6 +16,9 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();    // ✅ serves wwwroot — must be before auth
+
+
 app.UseCors();                // ✅ must be before auth
 
 app.UseAuthentication();     // ✅ MISSING — must come before UseAuthorization

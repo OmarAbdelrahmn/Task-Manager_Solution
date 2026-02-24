@@ -29,13 +29,13 @@ public class AuditInterceptor(IHttpContextAccessor httpContextAccessor) : SaveCh
         {
             if (entry.State == EntityState.Added)
             {
-                entry.Property(x => x.CreatedAt).CurrentValue = DateTime.UtcNow;
+                entry.Property(x => x.CreatedAt).CurrentValue = DateTime.Now;
                 entry.Property(x => x.CreatedById).CurrentValue = currentUserId;
             }
 
             if (entry.State == EntityState.Modified)
             {
-                entry.Property(x => x.UpdatedAt).CurrentValue = DateTime.UtcNow;
+                entry.Property(x => x.UpdatedAt).CurrentValue = DateTime.Now;
                 entry.Property(x => x.UpdatedById).CurrentValue = currentUserId;
             }
         }

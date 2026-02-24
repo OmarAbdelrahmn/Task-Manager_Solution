@@ -49,10 +49,9 @@ public class AuthService(
         if (result.Succeeded)
         {
             var userRoles = await GetUserRolesAndPermissions(user, cancellationToken);
-
             var (token, expiresIn) = _jwtProvider.GenerateToken(user, userRoles);
             var refreshToken = GenerateRefreshToken();
-            var refreshTokenExpiration = DateTime.UtcNow.AddDays(_refreshTokenExpiryDays);
+            var refreshTokenExpiration = DateTime.Now.AddDays(_refreshTokenExpiryDays);
 
             user.RefreshTokens.Add(new RefreshToken
             {
@@ -61,10 +60,11 @@ public class AuthService(
             });
 
             user.LastLogin = DateTime.Now;
+            user.IsOnline = true;
 
             await _userManager.UpdateAsync(user);
 
-            var response = new AuthResponse(user.Id, user.UserName , user.FullName, token, expiresIn, refreshToken, refreshTokenExpiration);
+            var response = new AuthResponse(user.Id, user.UserName , user.FullName, user.AvatarUrl, token, expiresIn, refreshToken, refreshTokenExpiration);
 
             return Result.Success(response);
         }
@@ -93,7 +93,7 @@ public class AuthService(
         if (user.IsDisabled)
             return Result.Failure<AuthResponse>(UserErrors.DisabledUser);
 
-        if (user.LockoutEnd > DateTime.UtcNow)
+        if (user.LockoutEnd > DateTime.Now)
             return Result.Failure<AuthResponse>(UserErrors.LockedUser);
 
         var userRefreshToken = user.RefreshTokens.SingleOrDefault(x => x.Token == refreshToken && x.IsActive);
@@ -101,13 +101,13 @@ public class AuthService(
         if (userRefreshToken is null)
             return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
 
-        userRefreshToken.RevokedOn = DateTime.UtcNow;
+        userRefreshToken.RevokedOn = DateTime.Now;
 
         var userRoles= await GetUserRolesAndPermissions(user, cancellationToken);
 
         var (newToken, expiresIn) = _jwtProvider.GenerateToken(user, userRoles);
         var newRefreshToken = GenerateRefreshToken();
-        var refreshTokenExpiration = DateTime.UtcNow.AddDays(_refreshTokenExpiryDays);
+        var refreshTokenExpiration = DateTime.Now.AddDays(_refreshTokenExpiryDays);
 
         user.RefreshTokens.Add(new RefreshToken
         {
@@ -117,7 +117,7 @@ public class AuthService(
 
         await _userManager.UpdateAsync(user);
 
-        var response = new AuthResponse(user.Id, user.UserName, user.FullName, newToken, expiresIn, newRefreshToken, refreshTokenExpiration);
+        var response = new AuthResponse(user.Id, user.UserName, user.FullName,user.AvatarUrl, newToken, expiresIn, newRefreshToken, refreshTokenExpiration);
 
         return Result.Success(response);
     }
@@ -139,7 +139,9 @@ public class AuthService(
         if (userRefreshToken is null)
             return Result.Failure(UserErrors.InvalidRefreshToken);
 
-        userRefreshToken.RevokedOn = DateTime.UtcNow;
+        userRefreshToken.RevokedOn = DateTime.Now;
+
+        user.IsOnline = false;
 
         await _userManager.UpdateAsync(user);
 
@@ -153,7 +155,14 @@ public class AuthService(
         if (emailIsExists != null)
             return Result.Failure(UserErrors.DuplicatedEmail);
 
-        var user = request.Adapt<ApplicationUser>();
+        var user = new ApplicationUser
+        {
+            UserName = request.UserName,
+            FullName = request.FullName,
+            EmailConfirmed = true,         // no email confirmation flow currently
+            IsOnline = false,
+            IsDisabled = false
+        };
 
         var result = await _userManager.CreateAsync(user, request.Password);
 
@@ -170,139 +179,10 @@ public class AuthService(
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
 
-    //public async Task<Result> ConfirmEmailAsync(ConfirmEmailRequest request)
-    //{
-    //    if (await _userManager.FindByIdAsync(request.UserId) is not { } user)
-    //        return Result.Failure(UserErrors.InvalidCode);
-
-    //    if (user.EmailConfirmed)
-    //        return Result.Failure(UserErrors.DuplicatedConfirmation);
-
-    //    var code = request.Code;
-
-    //    try
-    //    {
-    //        code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
-    //    }
-    //    catch (FormatException)
-    //    {
-    //        return Result.Failure(UserErrors.InvalidCode);
-    //    }
-
-    //    var result = await _userManager.ConfirmEmailAsync(user, code);
-
-    //    if (result.Succeeded)
-    //    {
-    //        await _userManager.AddToRoleAsync(user, DefaultRoles.User.Name);
-    //        return Result.Success();
-    //    }
-
-    //    var error = result.Errors.First();
-
-    //    return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
-    //}
-
-    //public async Task<Result> ResendConfirmationEmailAsync(ResendConfirmationEmailRequest request)
-    //{
-    //    if (await _userManager.FindByEmailAsync(request.Email) is not { } user)
-    //        return Result.Success();
-
-    //    if (user.EmailConfirmed)
-    //        return Result.Failure(UserErrors.DuplicatedConfirmation);
-
-    //    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-    //    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-    //    _logger.LogInformation("Confirmation code: {code}", code);
-
-    //    await SendConfirmationEmail(user, code);
-
-    //    return Result.Success();
-    //}
-
-    //public async Task<Result> SendResetPasswordCodeAsync(string email)
-    //{
-    //    if (await _userManager.FindByEmailAsync(email) is not { } user)
-    //        return Result.Success();
-
-    //    if (!user.EmailConfirmed)
-    //        return Result.Failure(UserErrors.EmailNotConfirmed with { StatusCode = StatusCodes.Status400BadRequest });
-
-    //    var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-    //    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-    //    _logger.LogInformation("Reset code: {code}", code);
-
-    //    await SendResetPasswordEmail(user, code);
-
-    //    return Result.Success();
-    //}
-
-    //public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request)
-    //{
-    //    var user = await _userManager.FindByEmailAsync(request.Email);
-
-    //    if (user is null || !user.EmailConfirmed)
-    //        return Result.Failure(UserErrors.InvalidCode);
-
-    //    IdentityResult result;
-
-    //    try
-    //    {
-    //        var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Code));
-    //        result = await _userManager.ResetPasswordAsync(user, code, request.NewPassword);
-    //    }
-    //    catch (FormatException)
-    //    {
-    //        result = IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken());
-    //    }
-
-    //    if (result.Succeeded)
-    //        return Result.Success();
-
-    //    var error = result.Errors.First();
-
-    //    return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status401Unauthorized));
-    //}
-
     private static string GenerateRefreshToken()
     {
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
     }
-
-    //private async Task SendConfirmationEmail(ApplicationUser user, string code)
-    //{
-    //    var origin = _httpContextAccessor.HttpContext?.Request.Headers.Origin;
-
-    //    var emailBody = EmailBodyBuilder.GenerateEmailBody("EmailConfirmation",
-    //        templateModel: new Dictionary<string, string>
-    //        {
-    //            { "{{name}}", user.FirstName },
-    //                { "{{action_url}}", $"{origin}/auth/emailConfirmation?userId={user.Id}&code={code}" }
-    //        }
-    //    );
-
-    //    BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Survey Basket: Email Confirmation", emailBody));
-
-    //    await Task.CompletedTask;
-    //}
-
-    //private async Task SendResetPasswordEmail(ApplicationUser user, string code)
-    //{
-    //    var origin = _httpContextAccessor.HttpContext?.Request.Headers.Origin;
-
-    //    var emailBody = EmailBodyBuilder.GenerateEmailBody("ForgetPassword",
-    //        templateModel: new Dictionary<string, string>
-    //        {
-    //            { "{{name}}", user.FirstName },
-    //            { "{{action_url}}", $"{origin}/auth/forgetPassword?email={user.Email}&code={code}" }
-    //        }
-    //    );
-
-    //    BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Survey Basket: Change Password", emailBody));
-
-    //    await Task.CompletedTask;
-    //}
 
     private async Task<IEnumerable<string>> GetUserRolesAndPermissions(ApplicationUser user, CancellationToken cancellationToken)
     {

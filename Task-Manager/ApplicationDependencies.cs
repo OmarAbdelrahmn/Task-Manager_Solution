@@ -1,7 +1,9 @@
 ﻿using Application.Authentication;
 using Application.Services.Admin;
 using Application.Services.Auth;
+using Application.Services.Roles;
 using Application.Services.User;
+using Application.Services.UserFile;
 using Domain;
 using Domain.Entities.Identity;
 using Domain.Entities.Interceptors;
@@ -36,7 +38,7 @@ public static class ApplicationDependencies
         Services.AddScoped<IAuthService, AuthService>();
         Services.AddScoped<IAdminService, AdminService>();
         Services.AddScoped<IUserService, UserServices>();
-
+        Services.AddScoped<IUserFileService, UserFileService>();
 
 
         Services.AddAuth(configuration)
