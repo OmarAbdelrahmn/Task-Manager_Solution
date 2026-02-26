@@ -7,7 +7,7 @@ namespace Task_Manager.Controllers;
 
 [Route("api/admin")]
 [ApiController]
-[Authorize(Roles = "Admin")]       
+//[Authorize(Roles = "Admin")]       
 public class AdminController(
     IAdminService service,
     IUserService userService) : ControllerBase

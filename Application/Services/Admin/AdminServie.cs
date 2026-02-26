@@ -41,7 +41,7 @@ public class AdminService(
 
     public async Task<IEnumerable<UserResponses>> GetAllUsers()
     {
-        var users = await manager.Users
+        var users = await dbcontext.Users
             .Select(u => new
             {
                 u.Id,
@@ -52,22 +52,23 @@ public class AdminService(
                 u.IsOnline,
                 u.LastLogin,
                 u.AvatarUrl,
-                // ✅ task stats per user
                 AssignedTasksCount = dbcontext.TaskAssignees
-                    .Count(ta => ta.UserId == u.Id),
+                    //.IgnoreQueryFilters()  // ✅ bypass the global filter
+                    .Count(ta => ta.UserId == u.Id && !ta.Task.IsDeleted),
+
                 CompletedTasksCount = dbcontext.TaskAssignees
+                    //.IgnoreQueryFilters()  // ✅ bypass the global filter
                     .Count(ta => ta.UserId == u.Id
+                        && !ta.Task.IsDeleted
                         && ta.Task.Status == Domain.Entities.TaskStatus.Done)
             })
             .ToListAsync();
 
         var result = new List<UserResponses>();
-
         foreach (var u in users)
         {
             var roles = await manager.GetRolesAsync(
                 await manager.FindByIdAsync(u.Id) ?? new ApplicationUser());
-
             result.Add(new UserResponses(
                 u.Id,
                 u.FullName ?? "",
@@ -82,7 +83,6 @@ public class AdminService(
                 u.CompletedTasksCount
             ));
         }
-
         return result;
     }
 

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using TaskStatus = Domain.Entities.TaskStatus;
 
 namespace Application.Services.Tasks;
 
@@ -398,7 +399,7 @@ public class TaskService(
         return Result.Success(MapToFileResponse(taskFile));
     }
 
-    public async Task<Result> DeleteFileAsync(int taskId, int fileId)
+    public async Task<Result> DeleteFileAsync(int taskId, int fileId,string DeletedBy)
     {
         var file = await db.TaskFiles
             .FirstOrDefaultAsync(f => f.Id == fileId && f.TaskId == taskId);

@@ -39,20 +39,22 @@ public class ApplicationDbcontext(DbContextOptions<ApplicationDbcontext> options
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        // ✅ global soft-delete filter — auto-excludes IsDeleted = true everywhere
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
             {
+                var parameter = System.Linq.Expressions.Expression.Parameter(
+                    entityType.ClrType, "e");  // ✅ single instance
+
                 modelBuilder.Entity(entityType.ClrType)
                     .HasQueryFilter(
                         System.Linq.Expressions.Expression.Lambda(
                             System.Linq.Expressions.Expression.Equal(
                                 System.Linq.Expressions.Expression.Property(
-                                    System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e"),
+                                    parameter,  // ✅ reuse same instance
                                     nameof(AuditableEntity.IsDeleted)),
                                 System.Linq.Expressions.Expression.Constant(false)),
-                            System.Linq.Expressions.Expression.Parameter(entityType.ClrType, "e")));
+                            parameter));  // ✅ reuse same instance
             }
         }
 
