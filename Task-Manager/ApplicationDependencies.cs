@@ -2,6 +2,7 @@
 using Application.Services.Admin;
 using Application.Services.Auth;
 using Application.Services.Roles;
+using Application.Services.Tasks;
 using Application.Services.User;
 using Application.Services.UserFile;
 using Domain;
@@ -39,6 +40,7 @@ public static class ApplicationDependencies
         Services.AddScoped<IAdminService, AdminService>();
         Services.AddScoped<IUserService, UserServices>();
         Services.AddScoped<IUserFileService, UserFileService>();
+        Services.AddScoped<ITaskService, TaskService>();
 
 
         Services.AddAuth(configuration)
@@ -143,7 +145,7 @@ public static class ApplicationDependencies
         {
             options.AddDefaultPolicy(builder =>
                 builder
-                        .AllowAnyOrigin()
+                        .WithOrigins("http://localhost:3000")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());
