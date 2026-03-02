@@ -1,5 +1,6 @@
 ﻿using Application.Contracts.User;
 using Application.Extensions;
+using Application.Services.Auth;
 using Application.Services.Roles;
 using Application.Services.User;
 using Application.Services.UserFile;
@@ -16,6 +17,27 @@ public class AccountController(
     IUserService service,
     IUserFileService fileService) : ControllerBase
 {
+
+    [HttpGet("assignable")]
+    [Authorize]                          // any authenticated user can call this
+    public async Task<IActionResult> GetAssignableUsers(
+    [FromQuery] string? search,
+    [FromQuery] IEnumerable<string>? excludeIds)
+    {
+        var result = await service.GetAssignableUsersAsync(search, excludeIds);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    [HttpGet("check-username")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CheckUserName([FromQuery] string userName)
+    {
+        var result = await service.IsUserNameAvailableAsync(userName);
+        return result.IsSuccess
+            ? Ok(new { isAvailable = result.Value })
+            : result.ToProblem();
+    }
+
     [HttpGet("")]
     public async Task<IActionResult> GetProfile()
     {

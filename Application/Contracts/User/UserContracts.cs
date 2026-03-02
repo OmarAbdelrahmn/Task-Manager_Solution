@@ -12,7 +12,8 @@ public record UserProfileResponse
 (
     string UserName,
     string FullName,
-    string Address
+    string Address,
+    string? AvatarUrl
     );
 
 
@@ -27,3 +28,14 @@ public record ChangePasswordRequest
     string CurrentPassword,
     string NewPassord
     );
+
+/// <summary>
+/// Lightweight user projection used in "assign task" dropdowns / pickers.
+/// </summary>
+public record UserAssigneeResponse(
+    string Id,
+    string UserName,
+    string FullName,
+    string? AvatarUrl,
+    bool IsOnline
+);

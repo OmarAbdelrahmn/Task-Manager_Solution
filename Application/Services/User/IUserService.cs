@@ -13,6 +13,12 @@ public interface IUserService
     Task<Result> UpdateUserProfile(string id, UpdateUserProfileRequest request);
     Task<Result> ChangePassword(string id, ChangePasswordRequest request);
     Task<Result> ChangeRoleForUser(string userName, string newRole);
-    Task<Result> UpdateAvatarAsync(string id, IFormFile file, IUserFileService fileService);
+    Task<Result<string>> UpdateAvatarAsync(string id, IFormFile file, IUserFileService fileService);
     Task<Result> SetOnlineStatusAsync(string id, bool isOnline);
+
+    Task<Result<IEnumerable<UserAssigneeResponse>>> GetAssignableUsersAsync(
+    string? search = null,
+    IEnumerable<string>? excludeIds = null);
+
+    Task<Result<bool>> IsUserNameAvailableAsync(string userName);
 }

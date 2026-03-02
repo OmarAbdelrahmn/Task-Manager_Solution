@@ -87,12 +87,12 @@ public class UserServices(
         return Result.Success();
     }
 
-    public async Task<Result> UpdateAvatarAsync(string id, IFormFile file, IUserFileService fileService)
+    public async Task<Result<string>> UpdateAvatarAsync(string id, IFormFile file, IUserFileService fileService)
     {
         var user = await manager.FindByIdAsync(id);
 
         if (user is null)
-            return Result.Failure(UserErrors.UserNotFound);
+            return Result.Failure<string>(UserErrors.UserNotFound);
 
         // delete old avatar if exists
         if (!string.IsNullOrEmpty(user.AvatarUrl))
@@ -105,7 +105,7 @@ public class UserServices(
             .ExecuteUpdateAsync(set => set
                 .SetProperty(x => x.AvatarUrl, avatarUrl));
 
-        return Result.Success();
+        return Result.Success(avatarUrl);
     }
 
     public async Task<Result> SetOnlineStatusAsync(string id, bool isOnline)
@@ -122,5 +122,50 @@ public class UserServices(
                 .SetProperty(x => x.LastLogin, isOnline ? DateTime.Now : user.LastLogin));
 
         return Result.Success();
+    }
+
+    // ── NEW — append inside the UserServices class ───────────────────────────────
+
+    public async Task<Result<IEnumerable<UserAssigneeResponse>>> GetAssignableUsersAsync(
+        string? search = null,
+        IEnumerable<string>? excludeIds = null)
+    {
+        var query = manager.Users
+            .Where(u => !u.IsDisabled);          // only active accounts
+
+        // ── optional text search (username or full name) ─────────────────────
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(u =>
+                (u.UserName != null && u.UserName.ToLower().Contains(term)) ||
+                (u.FullName != null && u.FullName.ToLower().Contains(term)));
+        }
+
+        // ── optional exclusion list (e.g. already-assigned users) ────────────
+        var excluded = excludeIds?.ToList();
+        if (excluded is { Count: > 0 })
+            query = query.Where(u => !excluded.Contains(u.Id));
+
+        var users = await query
+            .OrderBy(u => u.FullName)
+            .Select(u => new UserAssigneeResponse(
+                u.Id,
+                u.UserName ?? "",
+                u.FullName ?? "",
+                u.AvatarUrl,
+                u.IsOnline))
+            .ToListAsync();
+
+        return Result.Success<IEnumerable<UserAssigneeResponse>>(users);
+    }
+
+    public async Task<Result<bool>> IsUserNameAvailableAsync(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+            return Result.Failure<bool>(UserErrors.InvalidCredentials);
+
+        var exists = await manager.FindByNameAsync(userName.Trim());
+        return Result.Success(exists is null);   // true = available, false = taken
     }
 }
