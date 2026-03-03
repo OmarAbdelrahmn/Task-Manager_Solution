@@ -13,6 +13,15 @@ namespace Task_Manager.Controllers;
 public class TasksController(ITaskService service) : ControllerBase
 {
 
+
+    [HttpGet("my")]
+    public async Task<IActionResult> GetMyTasks()
+    {
+        var result = await service.GetMyTasksAsync(User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+
     // GET api/tasks
     [HttpGet("")]
     public async Task<IActionResult> GetAll([FromQuery] TaskFilterRequest filter)

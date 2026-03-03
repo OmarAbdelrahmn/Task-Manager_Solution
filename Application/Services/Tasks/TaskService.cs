@@ -24,6 +24,20 @@ public class TaskService(
     //  QUERIES
     // ═══════════════════════════════════════════════════════════════════════
 
+    public async Task<Result<IEnumerable<TaskSummaryResponse>>> GetMyTasksAsync(string userId)
+    {
+        var tasks = await db.Tasks
+            .Include(t => t.Assignees)
+                .ThenInclude(a => a.User)
+            .Where(t => !t.IsDeleted &&
+                        t.Assignees.Any(a => a.UserId == userId))
+            .OrderByDescending(t => t.CreatedAt)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return Result.Success(tasks.Select(MapToSummary));
+    }
+
     public async Task<PagedResponse<TaskSummaryResponse>> GetAllTasksAsync(TaskFilterRequest filter)
     {
         // Build the base query

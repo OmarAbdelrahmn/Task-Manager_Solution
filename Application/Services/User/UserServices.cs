@@ -133,19 +133,6 @@ public class UserServices(
         var query = manager.Users
             .Where(u => !u.IsDisabled);          // only active accounts
 
-        // ── optional text search (username or full name) ─────────────────────
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var term = search.Trim().ToLower();
-            query = query.Where(u =>
-                (u.UserName != null && u.UserName.ToLower().Contains(term)) ||
-                (u.FullName != null && u.FullName.ToLower().Contains(term)));
-        }
-
-        // ── optional exclusion list (e.g. already-assigned users) ────────────
-        var excluded = excludeIds?.ToList();
-        if (excluded is { Count: > 0 })
-            query = query.Where(u => !excluded.Contains(u.Id));
 
         var users = await query
             .OrderBy(u => u.FullName)
@@ -153,7 +140,7 @@ public class UserServices(
                 u.Id,
                 u.UserName ?? "",
                 u.FullName ?? "",
-                u.AvatarUrl,
+                u.AvatarUrl ?? "" ,
                 u.IsOnline))
             .ToListAsync();
 

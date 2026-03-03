@@ -10,6 +10,7 @@ internal class UserContracts
 
 public record UserProfileResponse
 (
+    string Id,
     string UserName,
     string FullName,
     string Address,
@@ -36,6 +37,6 @@ public record UserAssigneeResponse(
     string Id,
     string UserName,
     string FullName,
-    string? AvatarUrl,
+    string AvatarUrl,
     bool IsOnline
 );

@@ -9,6 +9,8 @@ public interface ITaskService
 {
     // ── Queries ─────────────────────────────────────────────────────────────
 
+    Task<Result<IEnumerable<TaskSummaryResponse>>> GetMyTasksAsync(string userId);
+
     /// <summary>Paginated, filtered list of tasks.</summary>
     Task<PagedResponse<TaskSummaryResponse>> GetAllTasksAsync(TaskFilterRequest filter);
 
