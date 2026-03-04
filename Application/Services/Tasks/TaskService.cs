@@ -191,6 +191,29 @@ public class TaskService(
         db.Conversations.Add(conversation);
         await db.SaveChangesAsync();
 
+
+        // ── Add assignees as conversation participants ───────────────────────
+        var participantIds = new HashSet<string>();
+
+        // always add the creator
+        participantIds.Add(createdById);
+
+        // add all valid assignees
+        if (request.AssigneeIds is { Count: > 0 })
+            participantIds.UnionWith(request.AssigneeIds.Distinct());
+
+        foreach (var participantId in participantIds)
+        {
+            db.ConversationParticipants.Add(new ConversationParticipant
+            {
+                ConversationId = conversation.Id,
+                UserId = participantId,
+                JoinedAt = DateTime.Now
+            });
+        }
+
+        await db.SaveChangesAsync();
+
         var created = await LoadTaskDetailAsync(task.Id);
         return Result.Success(MapToDetail(created!));
     }

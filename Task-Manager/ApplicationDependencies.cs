@@ -1,6 +1,7 @@
 ﻿using Application.Authentication;
 using Application.Services.Admin;
 using Application.Services.Auth;
+using Application.Services.Conversations;
 using Application.Services.Roles;
 using Application.Services.Tasks;
 using Application.Services.User;
@@ -41,6 +42,8 @@ public static class ApplicationDependencies
         Services.AddScoped<IUserService, UserServices>();
         Services.AddScoped<IUserFileService, UserFileService>();
         Services.AddScoped<ITaskService, TaskService>();
+        Services.AddScoped<IConversationService, ConversationService>();
+
 
 
         Services.AddAuth(configuration)
@@ -48,6 +51,7 @@ public static class ApplicationDependencies
                 .AddFluentValidation()
                 .AddSwagger()
                 .AddDatabase(configuration)
+                .AddSignalRConfig()
                 .AddCORS();
 
         return Services;
@@ -127,6 +131,21 @@ public static class ApplicationDependencies
 
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Jwtsetting?.Key!))
             };
+            o.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    var path = context.HttpContext.Request.Path;
+
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        path.StartsWithSegments("/hubs"))
+                    {
+                        context.Token = accessToken;
+                    }
+                    return Task.CompletedTask;
+                }
+            };
         });
         Services.Configure<IdentityOptions>(options =>
         {
@@ -137,7 +156,22 @@ public static class ApplicationDependencies
 
         });
 
+        Services.AddAuthorization();
+
         return Services;
+    }
+
+    public static IServiceCollection AddSignalRConfig(this IServiceCollection services)
+    {
+        services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true;  // turn off in production
+            options.MaximumReceiveMessageSize = 10 * 1024;
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+            options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+        });
+
+        return services;
     }
     public static IServiceCollection AddCORS(this IServiceCollection Services)
     {
