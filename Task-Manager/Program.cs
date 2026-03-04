@@ -1,6 +1,6 @@
 
 using Task_Manager;
-using Task_Manager.Hubs;
+using Application.Services.Conversations;
 
 var builder = WebApplication.CreateBuilder(args);
 
