@@ -1,0 +1,112 @@
+﻿
+using Application.Contracts.Conversations;
+using Application.Extensions;
+using Application.Services.Conversations;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Task_Manager;
+
+[Route("api/conversations")]
+[ApiController]
+[Authorize]
+public class ConversationsController(IConversationService service) : ControllerBase
+{
+    // GET api/conversations
+    [HttpGet]
+    public async Task<IActionResult> GetMine()
+    {
+        var result = await service.GetMyConversationsAsync(User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // GET api/conversations/{id}
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var result = await service.GetConversationAsync(id, User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // POST api/conversations/direct
+    [HttpPost("direct")]
+    public async Task<IActionResult> CreateDirect([FromBody] CreateDirectConversationRequest req)
+    {
+        var result = await service.CreateDirectAsync(req, User.GetUserId()!);
+        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value) : result.ToProblem();
+    }
+
+    // POST api/conversations/group
+    [HttpPost("group")]
+    public async Task<IActionResult> CreateGroup([FromBody] CreateGroupConversationRequest req)
+    {
+        var result = await service.CreateGroupAsync(req, User.GetUserId()!);
+        return result.IsSuccess ? CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value) : result.ToProblem();
+    }
+
+    // POST api/conversations/{id}/participants
+    [HttpPost("{id:int}/participants")]
+    public async Task<IActionResult> AddParticipant(int id, [FromBody] string userId)
+    {
+        var result = await service.AddParticipantAsync(id, userId, User.GetUserId()!);
+        return result.IsSuccess ? Ok(new { message = "Participant added." }) : result.ToProblem();
+    }
+
+    // DELETE api/conversations/{id}/participants/{userId}
+    [HttpDelete("{id:int}/participants/{userId}")]
+    public async Task<IActionResult> RemoveParticipant(int id, string userId)
+    {
+        var result = await service.RemoveParticipantAsync(id, userId, User.GetUserId()!);
+        return result.IsSuccess ? NoContent() : result.ToProblem();
+    }
+
+    // POST api/conversations/{id}/read
+    [HttpPost("{id:int}/read")]
+    public async Task<IActionResult> MarkRead(int id)
+    {
+        var result = await service.MarkAsReadAsync(id, User.GetUserId()!);
+        return result.IsSuccess ? Ok() : result.ToProblem();
+    }
+
+    // GET api/conversations/{id}/messages?page=1&pageSize=50
+    [HttpGet("{id:int}/messages")]
+    public async Task<IActionResult> GetMessages(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
+    {
+        var result = await service.GetMessagesAsync(id, User.GetUserId()!, page, pageSize);
+        return Ok(result);
+    }
+
+    // POST api/conversations/messages
+    [HttpPost("messages")]
+    public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest req)
+    {
+        var result = await service.SendMessageAsync(req, User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // PUT api/conversations/messages/{messageId}
+    [HttpPut("messages/{messageId:int}")]
+    public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageRequest req)
+    {
+        var result = await service.EditMessageAsync(messageId, req, User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // DELETE api/conversations/messages/{messageId}
+    [HttpDelete("messages/{messageId:int}")]
+    public async Task<IActionResult> DeleteMessage(int messageId)
+    {
+        var result = await service.DeleteMessageAsync(messageId, User.GetUserId()!);
+        return result.IsSuccess ? NoContent() : result.ToProblem();
+    }
+
+    // POST api/conversations/{id}/files
+    [HttpPost("{id:int}/files")]
+    public async Task<IActionResult> UploadFile(int id, IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "No file provided." });
+
+        var result = await service.UploadMessageFileAsync(id, file, User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+}
