@@ -179,7 +179,7 @@ public static class ApplicationDependencies
         {
             options.AddDefaultPolicy(builder =>
                 builder
-                        .WithOrigins("http://localhost:3000")
+                        .WithOrigins("http://localhost:3000", "https://expserco.pro")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());

@@ -109,4 +109,86 @@ public class ConversationsController(IConversationService service) : ControllerB
         var result = await service.UploadMessageFileAsync(id, file, User.GetUserId()!);
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
+
+    // Task_Manager/Controllers/ConversationsController.cs  (new endpoints — add to existing class)
+
+    // ── Update group name ──────────────────────────────────────────────────
+    // PUT api/conversations/{id}
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateGroup(int id, [FromBody] UpdateGroupRequest req)
+    {
+        var result = await service.UpdateGroupAsync(id, req, User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // ── Leave conversation ─────────────────────────────────────────────────
+    // POST api/conversations/{id}/leave
+    [HttpPost("{id:int}/leave")]
+    public async Task<IActionResult> Leave(int id)
+    {
+        var result = await service.LeaveConversationAsync(id, User.GetUserId()!);
+        return result.IsSuccess ? NoContent() : result.ToProblem();
+    }
+
+    // ── Delete conversation ────────────────────────────────────────────────
+    // DELETE api/conversations/{id}
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await service.DeleteConversationAsync(id, User.GetUserId()!);
+        return result.IsSuccess ? NoContent() : result.ToProblem();
+    }
+
+    // ── Total unread count ─────────────────────────────────────────────────
+    // GET api/conversations/unread
+    [HttpGet("unread")]
+    public async Task<IActionResult> GetUnreadCount()
+    {
+        var result = await service.GetUnreadCountAsync(User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // ── Search messages ────────────────────────────────────────────────────
+    // GET api/conversations/{id}/messages/search?query=hello&page=1&pageSize=30
+    [HttpGet("{id:int}/messages/search")]
+    public async Task<IActionResult> SearchMessages(
+        int id,
+        [FromQuery] string query,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 30)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return BadRequest(new { message = "Query cannot be empty." });
+
+        var result = await service.SearchMessagesAsync(id, User.GetUserId()!,
+            new MessageSearchRequest(query, page, pageSize));
+        return Ok(result);
+    }
+
+    // ── Get reactions for a message ────────────────────────────────────────
+    // GET api/conversations/messages/{messageId}/reactions
+    [HttpGet("messages/{messageId:int}/reactions")]
+    public async Task<IActionResult> GetReactions(int messageId)
+    {
+        var result = await service.GetReactionsAsync(messageId, User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // ── Add reaction ───────────────────────────────────────────────────────
+    // POST api/conversations/messages/{messageId}/reactions
+    [HttpPost("messages/{messageId:int}/reactions")]
+    public async Task<IActionResult> React(int messageId, [FromBody] ReactRequest req)
+    {
+        var result = await service.ReactAsync(messageId, req, User.GetUserId()!);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+
+    // ── Remove reaction ────────────────────────────────────────────────────
+    // DELETE api/conversations/messages/{messageId}/reactions/{emoji}
+    [HttpDelete("messages/{messageId:int}/reactions/{emoji}")]
+    public async Task<IActionResult> RemoveReaction(int messageId, string emoji)
+    {
+        var result = await service.RemoveReactionAsync(messageId, emoji, User.GetUserId()!);
+        return result.IsSuccess ? NoContent() : result.ToProblem();
+    }
 }

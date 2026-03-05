@@ -37,6 +37,7 @@ public record MessageResponse(
     int ConversationId,
     string SenderId,
     string SenderName,
+    string? SenderFullName,
     string? SenderAvatar,
     string? Body,
     MessageType Type,
@@ -63,3 +64,29 @@ public record ParticipantResponse(
     DateTime JoinedAt,
     DateTime? LastReadAt);
 
+
+// ── Update group ─────────────────────────────────────────────────────────────
+
+public record UpdateGroupRequest(string NewName);
+
+// ── Unread count ─────────────────────────────────────────────────────────────
+
+public record UnreadCountResponse(int TotalUnread);
+
+// ── Search ───────────────────────────────────────────────────────────────────
+
+public record MessageSearchRequest(
+    string Query,
+    int Page = 1,
+    int PageSize = 30);
+
+// ── Reactions ────────────────────────────────────────────────────────────────
+
+public record ReactRequest(string Emoji);
+
+public record MessageReactionResponse(
+    int MessageId,
+    string UserId,
+    string UserName,
+    string Emoji,
+    DateTime ReactedAt);

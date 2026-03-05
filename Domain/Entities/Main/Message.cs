@@ -21,4 +21,5 @@ public class Message : BaseEntity
     public ApplicationUser Sender { get; set; } = default!;
     public Message? ReplyTo { get; set; }
     public ICollection<MessageFile> Files { get; set; } = [];
+    public ICollection<MessageReaction> Reactions { get; set; } = [];
 }

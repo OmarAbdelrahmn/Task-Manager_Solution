@@ -186,7 +186,8 @@ public class TaskService(
         {
             Type = ConversationType.TaskThread,
             TaskId = task.Id,
-            CreatedById = createdById
+            CreatedById = createdById,
+            Name = task.Title
         };
         db.Conversations.Add(conversation);
         await db.SaveChangesAsync();
