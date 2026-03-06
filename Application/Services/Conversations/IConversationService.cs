@@ -2,6 +2,7 @@
 using Application.Abstraction;
 using Application.Contracts.Conversations;
 using Application.Contracts.Tasks;
+using Application.Services.UserFile;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Services.Conversations;
@@ -33,4 +34,7 @@ public interface IConversationService
     Task<Result<IEnumerable<MessageReactionResponse>>> GetReactionsAsync(int messageId, string userId);
     Task<Result<MessageReactionResponse>> ReactAsync(int messageId, ReactRequest req, string userId);
     Task<Result> RemoveReactionAsync(int messageId, string emoji, string userId);
+
+    Task<Result<string>> UpdateConversationAvatarAsync(
+    int conversationId, IFormFile file, string requesterId, IUserFileService fileService);
 }

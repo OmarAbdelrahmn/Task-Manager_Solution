@@ -36,5 +36,9 @@ public class ConversationConfiguration : IEntityTypeConfiguration<Conversation>
         builder.HasIndex(c => c.TaskId)
             .IsUnique()
             .HasFilter("[TaskId] IS NOT NULL");
+
+        builder.Property(c => c.AvatarUrl)
+            .HasMaxLength(1000)
+            .IsRequired(false);
     }
 }

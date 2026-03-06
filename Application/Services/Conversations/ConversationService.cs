@@ -1,6 +1,7 @@
 ﻿using Application.Abstraction;
 using Application.Abstraction.Errors;
 using Application.Contracts.Conversations;
+using Application.Services.UserFile;
 using Domain;
 using Domain.Entities;
 using Domain.Entities.Identity;
@@ -372,7 +373,7 @@ public class ConversationService(
         return Result.Success(new MessageFileResponse(
             0,
             file.FileName,
-            $"/uploads/messages/{conversationId}/{storedName}",
+            $"https://taskmanager.premiumasp.net/uploads/messages/{conversationId}/{storedName}",
             file.ContentType,
             file.Length));
     }
@@ -673,6 +674,43 @@ public class ConversationService(
         r.ReactedAt);
 
 
+    public async Task<Result<string>> UpdateConversationAvatarAsync(
+    int conversationId, IFormFile file, string requesterId, IUserFileService fileService)
+    {
+        var conv = await db.Conversations
+            .Include(c => c.Participants)
+            .FirstOrDefaultAsync(c => c.Id == conversationId && !c.IsDeleted);
+
+        if (conv is null)
+            return Result.Failure<string>(ConversationErrors.NotFound);
+
+        // Only Group and TaskThread conversations get their own avatar
+        if (conv.Type == ConversationType.Direct)
+            return Result.Failure<string>(ConversationErrors.OnlyGroupsAllowParticipantChange);
+
+        // Must be a participant to change the avatar
+        if (!conv.Participants.Any(p => p.UserId == requesterId))
+            return Result.Failure<string>(ConversationErrors.NotParticipant);
+
+        // Delete old avatar if one exists
+        if (!string.IsNullOrEmpty(conv.AvatarUrl))
+            fileService.DeleteFile(conv.AvatarUrl);
+
+        // Reuse the existing file service — store under "conversation-avatars/{id}/"
+        var avatarUrl = await fileService.SaveFileAsync(
+            file, "conversation-avatars", conversationId.ToString());
+
+        conv.AvatarUrl = avatarUrl;
+        await db.SaveChangesAsync();
+
+        // Notify all participants via SignalR
+        await hub.Clients
+            .Group($"conversation-{conversationId}")
+            .SendAsync("ConversationUpdated", new { conversationId, avatarUrl });
+
+        return Result.Success(avatarUrl);
+    }
+
 
 
     // ═══════════════════════════════════════════════════════════════
@@ -688,15 +726,24 @@ public class ConversationService(
             .FirstOrDefaultAsync(c => c.Id == id);
 
     private static ConversationSummaryResponse MapToSummary(
-    Conversation c, string currentUserId, int unreadCount = 0)
+        Conversation c, string currentUserId, int unreadCount = 0)
     {
         var lastMsg = c.Messages.OrderByDescending(m => m.CreatedAt).FirstOrDefault();
 
+        // For Direct conversations, derive avatar from the OTHER participant
+        string? avatarUrl = c.Type == ConversationType.Direct
+            ? c.Participants
+                .FirstOrDefault(p => p.UserId != currentUserId)
+                ?.User?.AvatarUrl
+            : c.AvatarUrl;   // Group/TaskThread use the conversation's own avatar
+
         return new ConversationSummaryResponse(
-            c.Id, c.Type, c.Name, c.TaskId,
+            c.Id, c.Type, c.Name,
+            avatarUrl,         // ← NEW
+            c.TaskId,
             c.Participants.Select(MapToParticipant).ToList(),
             lastMsg is not null ? MapToMessageResponse(lastMsg) : null,
-            unreadCount,   // ← passed in, not computed from the 1-message collection
+            unreadCount,
             c.CreatedAt);
     }
 

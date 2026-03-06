@@ -2,6 +2,7 @@
 using Application.Contracts.Conversations;
 using Application.Extensions;
 using Application.Services.Conversations;
+using Application.Services.UserFile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Task_Manager;
@@ -190,5 +191,26 @@ public class ConversationsController(IConversationService service) : ControllerB
     {
         var result = await service.RemoveReactionAsync(messageId, emoji, User.GetUserId()!);
         return result.IsSuccess ? NoContent() : result.ToProblem();
+    }
+
+    // PUT api/conversations/{id}/avatar
+    [HttpPut("{id:int}/avatar")]
+    public async Task<IActionResult> UpdateAvatar(
+        int id,
+        IFormFile file,
+        [FromServices] IUserFileService fileService)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "No file provided." });
+
+        if (!fileService.IsValidAvatar(file))
+            return BadRequest(new { message = "Invalid file. Only JPG, PNG, WEBP allowed. Max 5MB." });
+
+        var result = await service.UpdateConversationAvatarAsync(
+            id, file, User.GetUserId()!, fileService);
+
+        return result.IsSuccess
+            ? Ok(new { avatarUrl = result.Value })
+            : result.ToProblem();
     }
 }

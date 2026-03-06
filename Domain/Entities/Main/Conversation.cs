@@ -8,6 +8,8 @@ namespace Domain.Entities.Main;
 public class Conversation : AuditableEntity
 {
     public ConversationType Type { get; set; }
+    public string? AvatarUrl { get; set; }   // ← NEW
+
     public string? Name { get; set; }                  // for group chats only
     public int? TaskId { get; set; }                   // only when Type = TaskThread
 

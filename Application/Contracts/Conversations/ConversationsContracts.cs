@@ -26,6 +26,7 @@ public record ConversationSummaryResponse(
     int Id,
     ConversationType Type,
     string? Name,
+    string? AvatarUrl,
     int? TaskId,
     List<ParticipantResponse> Participants,
     MessageResponse? LastMessage,
