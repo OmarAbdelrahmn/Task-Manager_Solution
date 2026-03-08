@@ -2,6 +2,7 @@
 using Application.Services.Admin;
 using Application.Services.Auth;
 using Application.Services.Conversations;
+using Application.Services.Reports;
 using Application.Services.Roles;
 using Application.Services.Tasks;
 using Application.Services.User;
@@ -43,7 +44,7 @@ public static class ApplicationDependencies
         Services.AddScoped<IUserFileService, UserFileService>();
         Services.AddScoped<ITaskService, TaskService>();
         Services.AddScoped<IConversationService, ConversationService>();
-
+        Services.AddScoped<IUserTaskReportService, UserTaskReportService>();
 
 
         Services.AddAuth(configuration)
